@@ -13,11 +13,11 @@
 using namespace vex;
 
 // Percentage speed of the intake motors of the robot also ramp motors
-double IntakeSpeed = 100;
+double IntakeSpeed = 140;
 double OutakeSpeed = -25;
 double RampUpSpeed = 30;
-double RampDownSpeed = -15;
-double AutonWheelsSpeed = 30;
+double RampDownSpeed = -30;
+double AutonWheelsSpeed = 40;
 
 vex::motor FLeftMotor =
     vex::motor(vex::PORT9, vex::gearSetting::ratio18_1, false);
@@ -103,7 +103,7 @@ void stopIntake() {
 
 void rampUpAuton() {
   RamperMotor.setVelocity(RampUpSpeed, vex::velocityUnits::pct);
-  RamperMotor.rotateFor(160, vex::rotationUnits::rev,
+  RamperMotor.rotateFor(150, vex::rotationUnits::deg,
                         false /* wait for completion*/);
   outake();
   Brain.Screen.print("RAMP IS WORKING");
@@ -116,9 +116,12 @@ void rampUp() {
 
 void rampDownAuton() {
   RamperMotor.setVelocity(RampDownSpeed, vex::velocityUnits::pct);
-  RamperMotor.rotateFor(-160, vex::rotationUnits::rev,
-                        true /* wait for completion*/);
   intake();
+  RamperMotor.rotateFor(-150, vex::rotationUnits::deg,
+                        true /* wait for completion*/);
+
+  RamperMotor.setVelocity(0, vex::velocityUnits::pct);
+  stopIntake();
 }
 
 void rampDown() {
@@ -136,7 +139,7 @@ void buttons() {
   Brain.Screen.newLine();
   if (RampUp.pressing() /*&& RamperPosition < 160*/) {
     rampUp();
-  } else if (RampDown.pressing() /*&& RamperPosition > 1*/) {
+  } else if (RampDown.pressing() /*&& RamperPosition > -81.6*/) {
     rampDown();
   } else {
     RamperMotor.setVelocity(0, vex::velocityUnits::pct);
@@ -156,6 +159,14 @@ void buttons() {
     autonomous();
     autonomousStarted = false;
   }
+}
+
+void setWheelVelocity(double velocity) {
+
+  FRightMotor.setVelocity(velocity, vex::velocityUnits::pct);
+  BRightMotor.setVelocity(velocity, vex::velocityUnits::pct);
+  FLeftMotor.setVelocity(velocity, vex::velocityUnits::pct);
+  BLeftMotor.setVelocity(velocity, vex::velocityUnits::pct);
 }
 
 // Move the robot calculations by given inches
@@ -184,7 +195,7 @@ int radius = 10;
 // Turning the robot calculations by degree
 // Clockwise degrees are POSITIVE !!
 void turnDegree(double degrees) {
-  double roboCircum = 40;                          // radius * 2 * 3.14
+  double roboCircum = 45;                          // radius * 2 * 3.14
   double wheelTravel = degrees / 360 * roboCircum; /* inches */
   double revolutions = wheelTravel / 12.5; // 12.5 = circumference of the wheel
   FRightMotor.setVelocity(AutonWheelsSpeed, vex::velocityUnits::pct);
@@ -203,49 +214,28 @@ void turnDegree(double degrees) {
 
 // Autonomous code
 void autonomous() {
-  Brain.Screen.print("AUTON IS WORKING");
-  Brain.Screen.newLine();
   intake();
-  // task::sleep(300);
-  Brain.Screen.print("INTAKE IS WORKING");
-  Brain.Screen.newLine();
+
   moveInches(42);
-  // task::sleep(300);
-  Brain.Screen.print("MOVING IS WORKING");
-  Brain.Screen.newLine();
+
+  moveInches(-25);
+
   stopIntake();
-  // task::sleep(300);
-  Brain.Screen.print("STOP INTAKE IS WORKING");
-  Brain.Screen.newLine();
-  turnDegree(180);
-  // task::sleep(300);
-  Brain.Screen.print("TURNING IS WORKING");
-  Brain.Screen.newLine();
-  moveInches(20);
-  // task::sleep(300);
-  Brain.Screen.print("MOVING2 IS WORKING\n");
-  turnDegree(45);
-  // task::sleep(300);
-  Brain.Screen.print("TURNING2 IS WORKING\n");
-  moveInches(26);
-  // task::sleep(300);
-  Brain.Screen.print("MOVING3 IS WORKING\n");
+
+  turnDegree(-135);
+
+  setWheelVelocity(AutonWheelsSpeed);
+  task::sleep(3000);
   rampUpAuton();
-  // task::sleep(300);
-  Brain.Screen.print("RAMP2 IS WORKING");
-  Brain.Screen.newLine();
-  moveInches(5);
-  // task::sleep(300);
-  Brain.Screen.print("MOVINIG4 IS WORKING");
-  Brain.Screen.newLine();
-  moveInches(-20);
-  // task::sleep(300);
-  Brain.Screen.print("MOVING5 IS WORKING");
-  Brain.Screen.newLine();
+
+  setWheelVelocity(15);
+
+  task::sleep(4500);
+  moveInches(-16);
+
   rampDownAuton();
-  // task::sleep(300);
-  Brain.Screen.print("RAMP3 IS WORKING");
-  Brain.Screen.newLine();
+
+  turnDegree(180);
 }
 
 // Return a number/integer --v
