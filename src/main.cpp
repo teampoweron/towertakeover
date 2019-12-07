@@ -13,11 +13,14 @@
 using namespace vex;
 
 // Percentage speed of the intake motors of the robot also ramp motors
-double IntakeSpeed = 140;
+double IntakeSpeed = 200;
 double OutakeSpeed = -25;
 double RampUpSpeed = 30;
 double RampDownSpeed = -30;
 double AutonWheelsSpeed = 40;
+double AutonTurningSpeed = 30;
+double RampRotationRev = 2.3;
+bool LeftAuton = true;
 
 vex::motor FLeftMotor =
     vex::motor(vex::PORT9, vex::gearSetting::ratio18_1, false);
@@ -103,7 +106,8 @@ void stopIntake() {
 
 void rampUpAuton() {
   RamperMotor.setVelocity(RampUpSpeed, vex::velocityUnits::pct);
-  RamperMotor.rotateFor(150, vex::rotationUnits::deg,
+  RamperMotor.spin(vex::directionType::fwd);
+  RamperMotor.rotateFor(RampRotationRev, vex::rotationUnits::rev,
                         false /* wait for completion*/);
   outake();
   Brain.Screen.print("RAMP IS WORKING");
@@ -117,7 +121,7 @@ void rampUp() {
 void rampDownAuton() {
   RamperMotor.setVelocity(RampDownSpeed, vex::velocityUnits::pct);
   intake();
-  RamperMotor.rotateFor(-150, vex::rotationUnits::deg,
+  RamperMotor.rotateFor(-RampRotationRev, vex::rotationUnits::rev,
                         true /* wait for completion*/);
 
   RamperMotor.setVelocity(0, vex::velocityUnits::pct);
@@ -156,6 +160,13 @@ void buttons() {
   }
   if (Remote.ButtonA.pressing() && !autonomousStarted) {
     autonomousStarted = true;
+    LeftAuton = true;
+    autonomous();
+    autonomousStarted = false;
+  }
+  if (Remote.ButtonB.pressing() && !autonomousStarted) {
+    autonomousStarted = true;
+    LeftAuton = false;
     autonomous();
     autonomousStarted = false;
   }
@@ -167,6 +178,10 @@ void setWheelVelocity(double velocity) {
   BRightMotor.setVelocity(velocity, vex::velocityUnits::pct);
   FLeftMotor.setVelocity(velocity, vex::velocityUnits::pct);
   BLeftMotor.setVelocity(velocity, vex::velocityUnits::pct);
+  FLeftMotor.spin(vex::directionType::fwd);
+  BLeftMotor.spin(vex::directionType::fwd);
+  FRightMotor.spin(vex::directionType::fwd);
+  BRightMotor.spin(vex::directionType::fwd);
 }
 
 // Move the robot calculations by given inches
@@ -198,22 +213,28 @@ void turnDegree(double degrees) {
   double roboCircum = 45;                          // radius * 2 * 3.14
   double wheelTravel = degrees / 360 * roboCircum; /* inches */
   double revolutions = wheelTravel / 12.5; // 12.5 = circumference of the wheel
-  FRightMotor.setVelocity(AutonWheelsSpeed, vex::velocityUnits::pct);
+  FRightMotor.setVelocity(AutonTurningSpeed, vex::velocityUnits::pct);
   FRightMotor.rotateFor(-revolutions, vex::rotationUnits::rev,
                         false /* wait for completion */);
-  BRightMotor.setVelocity(AutonWheelsSpeed, vex::velocityUnits::pct);
+  BRightMotor.setVelocity(AutonTurningSpeed, vex::velocityUnits::pct);
   BRightMotor.rotateFor(-revolutions, vex::rotationUnits::rev,
                         false /* wait for completion */);
-  FLeftMotor.setVelocity(AutonWheelsSpeed, vex::velocityUnits::pct);
+  FLeftMotor.setVelocity(AutonTurningSpeed, vex::velocityUnits::pct);
   FLeftMotor.rotateFor(revolutions, vex::rotationUnits::rev,
                        false /* wait for completion */);
-  BLeftMotor.setVelocity(AutonWheelsSpeed, vex::velocityUnits::pct);
+  BLeftMotor.setVelocity(AutonTurningSpeed, vex::velocityUnits::pct);
   BLeftMotor.rotateFor(revolutions, vex::rotationUnits::rev,
                        true /* wait for completion */);
 }
 
 // Autonomous code
 void autonomous() {
+  double DirectionMultiplyer;
+  if (LeftAuton) {
+    DirectionMultiplyer = 1;
+  } else {
+    DirectionMultiplyer = -1;
+  }
   intake();
 
   moveInches(42);
@@ -222,7 +243,7 @@ void autonomous() {
 
   stopIntake();
 
-  turnDegree(-135);
+  turnDegree(DirectionMultiplyer * -135);
 
   setWheelVelocity(AutonWheelsSpeed);
   task::sleep(3000);
@@ -231,7 +252,7 @@ void autonomous() {
   setWheelVelocity(15);
 
   task::sleep(4500);
-  moveInches(-16);
+  moveInches(-20);
 
   rampDownAuton();
 
@@ -275,5 +296,6 @@ int main() {
   while (true) {
     movement();
     buttons();
+    task::sleep(20);
   }
 }
