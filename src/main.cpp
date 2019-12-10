@@ -60,7 +60,7 @@ void movement() {
   double adjustedAxis3Position = DriveSpeed(Remote.Axis3);
   double adjustedAxis1Position = DriveSpeed(Remote.Axis1);
   int Left_Speed = (adjustedAxis3Position + adjustedAxis1Position);
-  int maxSpeed = 75;
+  int maxSpeed = 60; /* used to be 75 */
   if (Left_Speed > maxSpeed) {
     Left_Speed = maxSpeed;
   } else if (Left_Speed < -maxSpeed) {
@@ -143,7 +143,7 @@ void buttons() {
   Brain.Screen.newLine();
   if (RampUp.pressing() /*&& RamperPosition < 160*/) {
     rampUp();
-  } else if (RampDown.pressing() /*&& RamperPosition > -81.6*/) {
+  } else if (RampDown.pressing() && RamperPosition > 0) {
     rampDown();
   } else {
     RamperMotor.setVelocity(0, vex::velocityUnits::pct);
