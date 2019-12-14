@@ -2,16 +2,22 @@
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
 /*    Author:       teampoweron                                               */
-/*    Created:      Sun Oct 27 2019                                           */
-/*    Description:  V5 project                                                */
+/*    Created:      Thu Sep 26 2019                                           */
+/*    Description:  Competition Template                                      */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
 // ---- START VEXCODE CONFIGURED DEVICES ----
 // ---- END VEXCODE CONFIGURED DEVICES ----
+
 #include "vex.h"
+
 using namespace vex;
 
+// A global instance of competition
+competition Competition;
+
+// define your global instances of motors and other devices here
 // Percentage speed of the intake motors of the robot also ramp motors
 double IntakeSpeed = 200;
 double OutakeSpeed = -25;
@@ -20,7 +26,9 @@ double RampDownSpeed = -30;
 double AutonWheelsSpeed = 40;
 double AutonTurningSpeed = 30;
 double RampRotationRev = 2.3;
+
 bool LeftAuton = true;
+bool CompetitionMode = false; // Set to true for competition
 
 vex::motor FLeftMotor =
     vex::motor(vex::PORT9, vex::gearSetting::ratio18_1, false);
@@ -204,9 +212,6 @@ void moveInches(double distanceInches) {
                        true /* wait for completion */);
 }
 
-// Radius
-int radius = 10;
-
 // Turning the robot calculations by degree
 // Clockwise degrees are POSITIVE !!
 void turnDegree(double degrees) {
@@ -227,8 +232,64 @@ void turnDegree(double degrees) {
                        true /* wait for completion */);
 }
 
-// Autonomous code
-void autonomous() {
+/*---------------------------------------------------------------------------*/
+/*                          Pre-Autonomous Functions                         */
+/*                                                                           */
+/*  You may want to perform some actions before the competition starts.      */
+/*  Do them in the following function.  You must return from this function   */
+/*  or the autonomous and usercontrol tasks will not be started.  This       */
+/*  function is only called once after the V5 has been powered on and        */
+/*  not every time that the robot is disabled.                               */
+/*---------------------------------------------------------------------------*/
+
+void pre_auton(void) {
+  // Initializing Robot Configuration. DO NOT REMOVE!
+  vexcodeInit();
+
+  // All activities that occur before the competition starts
+  // Example: clearing encoders, setting servo positions, ...
+
+  // Intake spinning mechanism
+  RightIntakeMotor.setVelocity(0, vex::velocityUnits::pct);
+  LeftIntakeMotor.setVelocity(0, vex::velocityUnits::pct);
+  RightIntakeMotor.spin(vex::directionType::fwd);
+  LeftIntakeMotor.spin(vex::directionType::fwd);
+
+  // Ramp spinning mechanism
+  RamperMotor.setVelocity(0, vex::velocityUnits::pct);
+  RamperMotor.spin(vex::directionType::fwd);
+  RamperMotor.setStopping(vex::brakeType::hold);
+
+  // Speed + Direction of motors
+  FLeftMotor.setVelocity(0, vex::velocityUnits::pct);
+  BLeftMotor.setVelocity(0, vex::velocityUnits::pct);
+  FRightMotor.setVelocity(0, vex::velocityUnits::pct);
+  BRightMotor.setVelocity(0, vex::velocityUnits::pct);
+
+  // Spinning the motors!
+  FLeftMotor.spin(vex::directionType::fwd);
+  BLeftMotor.spin(vex::directionType::fwd);
+  FRightMotor.spin(vex::directionType::fwd);
+  BRightMotor.spin(vex::directionType::fwd);
+
+  // Printing Words
+  Brain.Screen.print("carina!!");
+  Brain.Screen.newLine();
+  Brain.Screen.print("chloe!!");
+  Brain.Screen.newLine();
+}
+
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              Autonomous Task                              */
+/*                                                                           */
+/*  This task is used to control your robot during the autonomous phase of   */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
+/*---------------------------------------------------------------------------*/
+
+void autonomous(void) {
   double DirectionMultiplyer;
   if (LeftAuton) {
     DirectionMultiplyer = 1;
@@ -259,43 +320,43 @@ void autonomous() {
   turnDegree(180);
 }
 
-// Return a number/integer --v
-int main() {
-  // Initializing Robot Configuration. DO NOT REMOVE!
-  vexcodeInit();
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              User Control Task                            */
+/*                                                                           */
+/*  This task is used to control your robot during the user control phase of */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
+/*---------------------------------------------------------------------------*/
 
-  // Intake spinning mechanism
-  RightIntakeMotor.setVelocity(0, vex::velocityUnits::pct);
-  LeftIntakeMotor.setVelocity(0, vex::velocityUnits::pct);
-  RightIntakeMotor.spin(vex::directionType::fwd);
-  LeftIntakeMotor.spin(vex::directionType::fwd);
-
-  // Ramp spinning mechanism
-  RamperMotor.setVelocity(0, vex::velocityUnits::pct);
-  RamperMotor.spin(vex::directionType::fwd);
-  RamperMotor.setStopping(vex::brakeType::hold);
-
-  // Speed + Direction of motors
-  FLeftMotor.setVelocity(0, vex::velocityUnits::pct);
-  BLeftMotor.setVelocity(0, vex::velocityUnits::pct);
-  FRightMotor.setVelocity(0, vex::velocityUnits::pct);
-  BRightMotor.setVelocity(0, vex::velocityUnits::pct);
-
-  // Spinning the motors!
-  FLeftMotor.spin(vex::directionType::fwd);
-  BLeftMotor.spin(vex::directionType::fwd);
-  FRightMotor.spin(vex::directionType::fwd);
-  BRightMotor.spin(vex::directionType::fwd);
-
-  // Printing Words
-  Brain.Screen.print("carina!!");
-  Brain.Screen.newLine();
-  Brain.Screen.print("chloe!!");
-  Brain.Screen.newLine();
-
-  while (true) {
+void usercontrol(void) {
+  // User control code here, inside the loop
+  while (1) {
     movement();
     buttons();
-    task::sleep(20);
+
+    wait(20, msec); // Sleep the task for a short amount of time to
+                    // prevent wasted resources.
+  }
+}
+
+//
+// Main will set up the competition functions and callbacks.
+//
+int main() {
+  // Set up callbacks for autonomous and driver control periods.
+  Competition.autonomous(autonomous);
+  Competition.drivercontrol(usercontrol);
+
+  // Run the pre-autonomous function.
+  pre_auton();
+
+  if (!CompetitionMode) {
+    usercontrol();
+  } else {
+    while (true) {
+      wait(100, msec);
+    }
   }
 }
