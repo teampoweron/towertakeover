@@ -28,7 +28,7 @@ double AutonTurningSpeed = 30;
 double RampRotationRev = 2.3;
 
 bool LeftAuton = true;
-bool CompetitionMode = false; // Set to true for competition
+bool CompetitionMode = true; // Set to true for competition
 
 vex::motor FLeftMotor =
     vex::motor(vex::PORT9, vex::gearSetting::ratio18_1, false);
@@ -52,6 +52,7 @@ vex::controller::button RampDown = Remote.ButtonR2;
 
 // Autonomous code
 void autonomous();
+void pre_auton(void);
 
 double DriveSpeed(vex::controller::axis axis) {
   if (axis.position() < 50 && axis.position() > -50) {
@@ -170,12 +171,14 @@ void buttons() {
     autonomousStarted = true;
     LeftAuton = true;
     autonomous();
+    pre_auton();
     autonomousStarted = false;
   }
   if (Remote.ButtonB.pressing() && !autonomousStarted) {
     autonomousStarted = true;
     LeftAuton = false;
     autonomous();
+    pre_auton();
     autonomousStarted = false;
   }
 }
@@ -331,6 +334,7 @@ void autonomous(void) {
 /*---------------------------------------------------------------------------*/
 
 void usercontrol(void) {
+  pre_auton();
   // User control code here, inside the loop
   while (1) {
     movement();
