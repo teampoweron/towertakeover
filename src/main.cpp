@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
-/*    Author:       teampoweron                                               */
+/*    Author:       VEX                                                       */
 /*    Created:      Thu Sep 26 2019                                           */
 /*    Description:  Competition Template                                      */
 /*                                                                            */
@@ -21,14 +21,16 @@ competition Competition;
 // Percentage speed of the intake motors of the robot also ramp motors
 double IntakeSpeed = 200;
 double OutakeSpeed = -25;
-double RampUpSpeed = 30;
+double RampUpSpeed = 22;
 double RampDownSpeed = -30;
 double AutonWheelsSpeed = 40;
 double AutonTurningSpeed = 30;
-double RampRotationRev = 2.3;
 
+double RampRotationRev = 2.4;
+// blue=left
+// red=right
 bool LeftAuton = true;
-bool CompetitionMode = true; // Set to true for competition
+bool CompetitionMode = false;
 
 vex::motor FLeftMotor =
     vex::motor(vex::PORT9, vex::gearSetting::ratio18_1, false);
@@ -52,7 +54,6 @@ vex::controller::button RampDown = Remote.ButtonR2;
 
 // Autonomous code
 void autonomous();
-void pre_auton(void);
 
 double DriveSpeed(vex::controller::axis axis) {
   if (axis.position() < 50 && axis.position() > -50) {
@@ -66,6 +67,7 @@ double DriveSpeed(vex::controller::axis axis) {
 
 // Combining the wheels
 void movement() {
+  Brain.Screen.setCursor(1, 1);
   double adjustedAxis3Position = DriveSpeed(Remote.Axis3);
   double adjustedAxis1Position = DriveSpeed(Remote.Axis1);
   int Left_Speed = (adjustedAxis3Position + adjustedAxis1Position);
@@ -79,6 +81,10 @@ void movement() {
   BLeftMotor.setVelocity(Left_Speed, vex::velocityUnits::pct);
 
   int Right_Speed = (adjustedAxis3Position - adjustedAxis1Position);
+
+  Brain.Screen.print("Axis 3: %f Axis 1: %f \n", adjustedAxis3Position,
+                     adjustedAxis1Position);
+  Brain.Screen.newLine();
   if (Right_Speed > maxSpeed) {
     Right_Speed = maxSpeed;
   } else if (Right_Speed < -maxSpeed) {
@@ -87,7 +93,8 @@ void movement() {
   FRightMotor.setVelocity(Right_Speed, vex::velocityUnits::pct);
   BRightMotor.setVelocity(Right_Speed, vex::velocityUnits::pct);
 
-  Brain.Screen.setCursor(1, 1);
+  Brain.Screen.print("Left speed: %f Right_Speed: %f", Left_Speed, Right_Speed);
+
   Brain.Screen.print("Wheels: %d %d %d %d",
                      (int)FLeftMotor.rotation(vex::rotationUnits::deg),
                      (int)FRightMotor.rotation(vex::rotationUnits::deg),
@@ -152,7 +159,7 @@ void buttons() {
   Brain.Screen.newLine();
   if (RampUp.pressing() /*&& RamperPosition < 160*/) {
     rampUp();
-  } else if (RampDown.pressing() && RamperPosition > 0) {
+  } else if (RampDown.pressing() /*&& RamperPosition > 0*/) {
     rampDown();
   } else {
     RamperMotor.setVelocity(0, vex::velocityUnits::pct);
@@ -171,14 +178,12 @@ void buttons() {
     autonomousStarted = true;
     LeftAuton = true;
     autonomous();
-    pre_auton();
     autonomousStarted = false;
   }
   if (Remote.ButtonB.pressing() && !autonomousStarted) {
     autonomousStarted = true;
     LeftAuton = false;
     autonomous();
-    pre_auton();
     autonomousStarted = false;
   }
 }
@@ -214,6 +219,9 @@ void moveInches(double distanceInches) {
   BLeftMotor.rotateFor(revolutions, vex::rotationUnits::rev,
                        true /* wait for completion */);
 }
+
+// Radius
+int radius = 10;
 
 // Turning the robot calculations by degree
 // Clockwise degrees are POSITIVE !!
@@ -292,7 +300,7 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-void autonomous(void) {
+void autonomous4CubesInSmall(void) {
   double DirectionMultiplyer;
   if (LeftAuton) {
     DirectionMultiplyer = 1;
@@ -318,11 +326,56 @@ void autonomous(void) {
   task::sleep(4500);
   moveInches(-20);
 
-  rampDownAuton();
-
   turnDegree(180);
 }
-
+void autonomous(void) {
+  double DirectionMultiplyer;
+  if (LeftAuton) {
+    DirectionMultiplyer = 1;
+  } else {
+    DirectionMultiplyer = -1;
+  }
+  intake();
+  moveInches(42);
+  moveInches(-15);
+  turnDegree(DirectionMultiplyer * 40);
+  moveInches(-30);
+  turnDegree(DirectionMultiplyer * -40);
+  moveInches(30);
+  moveInches(-10);
+  stopIntake();
+  turnDegree(DirectionMultiplyer * -140);
+  setWheelVelocity(AutonWheelsSpeed);
+  task::sleep(2300);
+  rampUpAuton();
+  setWheelVelocity(20);
+  task::sleep(4300);
+  moveInches(-20);
+}
+void autonomousBigSide(void) {
+  double DirectionMultiplyer;
+  if (LeftAuton) {
+    DirectionMultiplyer = 1;
+  } else {
+    DirectionMultiplyer = -1;
+  }
+  intake();
+  moveInches(42);
+  turnDegree(DirectionMultiplyer * 45);
+  moveInches(-25);
+  turnDegree(DirectionMultiplyer * -45);
+  moveInches(20);
+  stopIntake();
+  moveInches(-25);
+  turnDegree(DirectionMultiplyer * -135);
+  setWheelVelocity(AutonWheelsSpeed);
+  task::sleep(2500);
+  rampUpAuton();
+  setWheelVelocity(15);
+  task::sleep(4500);
+  moveInches(-20);
+  turnDegree(180);
+}
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
 /*                              User Control Task                            */
@@ -334,7 +387,6 @@ void autonomous(void) {
 /*---------------------------------------------------------------------------*/
 
 void usercontrol(void) {
-  pre_auton();
   // User control code here, inside the loop
   while (1) {
     movement();
@@ -356,11 +408,8 @@ int main() {
   // Run the pre-autonomous function.
   pre_auton();
 
-  if (!CompetitionMode) {
-    usercontrol();
-  } else {
-    while (true) {
-      wait(100, msec);
-    }
+  // Prevent main from exiting with an infinite loop.
+  while (true) {
+    wait(100, msec);
   }
 }
