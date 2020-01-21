@@ -23,13 +23,14 @@ double IntakeSpeed = 200;
 double OutakeSpeed = -25;
 double RampUpSpeed = 22;
 double RampDownSpeed = -30;
-double AutonWheelsSpeed = 40;
+double AutonRampUpSpeed = 28;
+double AutonWheelsSpeed = 45;
 double AutonTurningSpeed = 30;
 
-double RampRotationRev = 2.4;
+double RampRotationRev = 2.6;
 // blue=left
 // red=right
-bool LeftAuton = true;
+bool LeftAuton = false;
 bool CompetitionMode = false;
 
 vex::motor FLeftMotor =
@@ -121,7 +122,7 @@ void stopIntake() {
 }
 
 void rampUpAuton() {
-  RamperMotor.setVelocity(RampUpSpeed, vex::velocityUnits::pct);
+  RamperMotor.setVelocity(AutonRampUpSpeed, vex::velocityUnits::pct);
   RamperMotor.spin(vex::directionType::fwd);
   RamperMotor.rotateFor(RampRotationRev, vex::rotationUnits::rev,
                         false /* wait for completion*/);
@@ -206,16 +207,27 @@ void moveInches(double distanceInches) {
       distanceInches / 12.5; // 12.5 = circumference of the wheel
   Brain.Screen.print("revolutions:%f", revolutions);
   Brain.Screen.newLine();
-  FRightMotor.setVelocity(AutonWheelsSpeed, vex::velocityUnits::pct);
+  setWheelVelocity(AutonWheelsSpeed / 2);
+  double initialSlowDistance = .2;
+  if (distanceInches < 0) {
+    initialSlowDistance = initialSlowDistance * -1;
+  }
+  FRightMotor.rotateFor(initialSlowDistance, vex::rotationUnits::rev,
+                        false /* wait for completion */);
+  BRightMotor.rotateFor(initialSlowDistance, vex::rotationUnits::rev,
+                        false /* wait for completion */);
+  FLeftMotor.rotateFor(initialSlowDistance, vex::rotationUnits::rev,
+                       false /* wait for completion */);
+  BLeftMotor.rotateFor(initialSlowDistance, vex::rotationUnits::rev,
+                       true /* wait for completion */);
+  setWheelVelocity(AutonWheelsSpeed);
+  revolutions = revolutions - initialSlowDistance;
   FRightMotor.rotateFor(revolutions, vex::rotationUnits::rev,
                         false /* wait for completion */);
-  BRightMotor.setVelocity(AutonWheelsSpeed, vex::velocityUnits::pct);
   BRightMotor.rotateFor(revolutions, vex::rotationUnits::rev,
                         false /* wait for completion */);
-  FLeftMotor.setVelocity(AutonWheelsSpeed, vex::velocityUnits::pct);
   FLeftMotor.rotateFor(revolutions, vex::rotationUnits::rev,
                        false /* wait for completion */);
-  BLeftMotor.setVelocity(AutonWheelsSpeed, vex::velocityUnits::pct);
   BLeftMotor.rotateFor(revolutions, vex::rotationUnits::rev,
                        true /* wait for completion */);
 }
@@ -300,34 +312,6 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-void autonomous4CubesInSmall(void) {
-  double DirectionMultiplyer;
-  if (LeftAuton) {
-    DirectionMultiplyer = 1;
-  } else {
-    DirectionMultiplyer = -1;
-  }
-  intake();
-
-  moveInches(42);
-
-  moveInches(-25);
-
-  stopIntake();
-
-  turnDegree(DirectionMultiplyer * -135);
-
-  setWheelVelocity(AutonWheelsSpeed);
-  task::sleep(3000);
-  rampUpAuton();
-
-  setWheelVelocity(15);
-
-  task::sleep(4500);
-  moveInches(-20);
-
-  turnDegree(180);
-}
 void autonomous(void) {
   double DirectionMultiplyer;
   if (LeftAuton) {
@@ -336,20 +320,46 @@ void autonomous(void) {
     DirectionMultiplyer = -1;
   }
   intake();
+  AutonWheelsSpeed = 30;
   moveInches(42);
-  moveInches(-15);
-  turnDegree(DirectionMultiplyer * 40);
-  moveInches(-30);
-  turnDegree(DirectionMultiplyer * -40);
-  moveInches(30);
-  moveInches(-10);
-  stopIntake();
+  AutonWheelsSpeed = 45;
+  moveInches(-22);
   turnDegree(DirectionMultiplyer * -140);
   setWheelVelocity(AutonWheelsSpeed);
-  task::sleep(2300);
+  stopIntake();
+  task::sleep(2800);
   rampUpAuton();
+  setWheelVelocity(15);
+  task::sleep(3000);
+  moveInches(-20);
+}
+
+// IF RUNNING THIS AUTON MAKE THE SPEED WAYYYYY FASTERRR!!!!!!
+// NEVER MIND :D :D :D
+void autonomous6cubes(void) {
+  double DirectionMultiplyer;
+  if (LeftAuton) {
+    DirectionMultiplyer = 1;
+  } else {
+    DirectionMultiplyer = -1;
+  }
+  intake();
+  moveInches(42);
+  moveInches(-17);
+  turnDegree(DirectionMultiplyer * 47);
+  moveInches(-29);
+  turnDegree(DirectionMultiplyer * -54);
+  moveInches(30);
+  moveInches(-13);
+  stopIntake();
+  turnDegree(DirectionMultiplyer * -145);
+  setWheelVelocity(AutonWheelsSpeed);
+  task::sleep(700);
+  rampUpAuton();
+  setWheelVelocity(AutonWheelsSpeed);
+  task::sleep(1600);
   setWheelVelocity(20);
-  task::sleep(4300);
+  task::sleep(2000);
   moveInches(-20);
 }
 void autonomousBigSide(void) {
