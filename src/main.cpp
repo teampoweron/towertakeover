@@ -28,10 +28,10 @@ double AutonWheelsSpeed = 45;
 double AutonTurningSpeed = 30;
 
 double RampRotationRev = 2.6;
-// blue=left
-// red=right
-bool LeftAuton = false;
-bool CompetitionMode = false;
+// blue=left=true
+// red=right=false
+bool LeftAuton = true;
+bool CompetitionMode = true;
 
 vex::motor FLeftMotor =
     vex::motor(vex::PORT9, vex::gearSetting::ratio18_1, false);
@@ -324,7 +324,7 @@ void autonomous(void) {
   moveInches(42);
   AutonWheelsSpeed = 45;
   moveInches(-22);
-  turnDegree(DirectionMultiplyer * -140);
+  turnDegree(DirectionMultiplyer * -130);
   setWheelVelocity(AutonWheelsSpeed);
   stopIntake();
   task::sleep(2800);
