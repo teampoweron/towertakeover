@@ -22,11 +22,12 @@ competition Competition;
 double IntakeSpeed = 200;
 double OutakeSpeed = -25;
 double RampUpSpeed = 22;
+double FastRampUpSpeed = 22;
+double SlowRampUpSpeed = 11;
 double RampDownSpeed = -30;
 double AutonRampUpSpeed = 28;
 double AutonWheelsSpeed = 45;
 double AutonTurningSpeed = 30;
-
 double RampRotationRev = 2.6;
 // blue=left=true
 // red=right=false
@@ -52,6 +53,8 @@ vex::controller::button Intake = Remote.ButtonL1;
 vex::controller::button Outake = Remote.ButtonL2;
 vex::controller::button RampUp = Remote.ButtonR1;
 vex::controller::button RampDown = Remote.ButtonR2;
+vex::controller::button FastUpRamp = Remote.ButtonX;
+vex::controller::button SlowUpRamp = Remote.ButtonY;
 
 // Autonomous code
 void autonomous();
@@ -167,6 +170,12 @@ void buttons() {
     if (!Intake.pressing() && !Outake.pressing()) {
       stopIntake();
     }
+  }
+  if (FastUpRamp.pressing()) {
+    RampUpSpeed=FastRampUpSpeed;
+  }
+    if (SlowUpRamp.pressing()) {
+    RampUpSpeed=SlowRampUpSpeed;
   }
   if (Intake.pressing()) {
     intake();
