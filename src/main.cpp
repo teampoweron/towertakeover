@@ -20,7 +20,7 @@ competition Competition;
 // define your global instances of motors and other devices here
 // Percentage speed of the intake motors of the robot also ramp motors
 double IntakeSpeed = 200;
-double OutakeSpeed = -25;
+double OutakeSpeed = -18;
 double RampUpSpeed = 22;
 double FastRampUpSpeed = 22;
 double SlowRampUpSpeed = 11;
@@ -29,6 +29,8 @@ double AutonRampUpSpeed = 28;
 double AutonWheelsSpeed = 45;
 double AutonTurningSpeed = 30;
 double RampRotationRev = 2.6;
+double RampBigSideRotationRev = 2.8;
+double RampBigSideDownRotationRev = 0.8;
 // blue=left=true
 // red=right=false
 bool LeftAuton = true;
@@ -58,6 +60,7 @@ vex::controller::button SlowUpRamp = Remote.ButtonY;
 
 // Autonomous code
 void autonomous();
+void autonomousBigSide();
 
 double DriveSpeed(vex::controller::axis axis) {
   if (axis.position() < 50 && axis.position() > -50) {
@@ -132,7 +135,14 @@ void rampUpAuton() {
   outake();
   Brain.Screen.print("RAMP IS WORKING");
 }
-
+void rampUpBigSideAuton() {
+  RamperMotor.setVelocity(AutonRampUpSpeed, vex::velocityUnits::pct);
+  RamperMotor.spin(vex::directionType::fwd);
+  RamperMotor.rotateFor(RampBigSideRotationRev, vex::rotationUnits::rev,
+                        false /* wait for completion*/);
+  outake();
+  Brain.Screen.print("RAMP IS WORKING");
+}
 void rampUp() {
   RamperMotor.setVelocity(RampUpSpeed, vex::velocityUnits::pct);
   outake();
@@ -140,8 +150,8 @@ void rampUp() {
 
 void rampDownAuton() {
   RamperMotor.setVelocity(RampDownSpeed, vex::velocityUnits::pct);
-  intake();
-  RamperMotor.rotateFor(-RampRotationRev, vex::rotationUnits::rev,
+  outake();
+  RamperMotor.rotateFor(-RampBigSideDownRotationRev, vex::rotationUnits::rev,
                         true /* wait for completion*/);
 
   RamperMotor.setVelocity(0, vex::velocityUnits::pct);
@@ -172,10 +182,10 @@ void buttons() {
     }
   }
   if (FastUpRamp.pressing()) {
-    RampUpSpeed=FastRampUpSpeed;
+    RampUpSpeed = FastRampUpSpeed;
   }
-    if (SlowUpRamp.pressing()) {
-    RampUpSpeed=SlowRampUpSpeed;
+  if (SlowUpRamp.pressing()) {
+    RampUpSpeed = SlowRampUpSpeed;
   }
   if (Intake.pressing()) {
     intake();
@@ -194,6 +204,18 @@ void buttons() {
     autonomousStarted = true;
     LeftAuton = false;
     autonomous();
+    autonomousStarted = false;
+  }
+  if (Remote.ButtonLeft.pressing() && !autonomousStarted) {
+    autonomousStarted = true;
+    LeftAuton = false;
+    autonomousBigSide();
+    autonomousStarted = false;
+  }
+  if (Remote.ButtonDown.pressing() && !autonomousStarted) {
+    autonomousStarted = true;
+    LeftAuton = true;
+    autonomousBigSide();
     autonomousStarted = false;
   }
 }
@@ -380,21 +402,24 @@ void autonomousBigSide(void) {
   }
   intake();
   moveInches(42);
-  turnDegree(DirectionMultiplyer * 45);
-  moveInches(-25);
-  turnDegree(DirectionMultiplyer * -45);
-  moveInches(20);
-  stopIntake();
-  moveInches(-25);
   turnDegree(DirectionMultiplyer * -135);
+  //moveInches(-25);
+  //turnDegree(DirectionMultiplyer * -45);
+  moveInches(40);
+  turnDegree(DirectionMultiplyer * -15);
+  //moveInches(-25);
+  //turnDegree(DirectionMultiplyer * -135);
   setWheelVelocity(AutonWheelsSpeed);
-  task::sleep(2500);
-  rampUpAuton();
+  task::sleep(1500);
+  stopIntake();
+  rampUpBigSideAuton();
   setWheelVelocity(15);
-  task::sleep(4500);
+  task::sleep(3500);
+  rampDownAuton();
   moveInches(-20);
-  turnDegree(180);
+  //turnDegree(180);
 }
+
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
 /*                              User Control Task                            */
