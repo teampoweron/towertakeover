@@ -31,10 +31,13 @@ double AutonTurningSpeed = 30;
 double RampRotationRev = 2.6;
 double RampBigSideRotationRev = 2.8;
 double RampBigSideDownRotationRev = 0.8;
-// blue=left=true
-// red=right=false
-bool LeftAuton = true;
+
+// blue=left=true-apply to both sides(so make the Big Side either true(on the big side) or false(not on the big side))
+// red=right=false-" "
+//BigSide=true=we are on the big side
+bool LeftAuton = false;
 bool CompetitionMode = true;
+bool BigSide = false;
 
 vex::motor FLeftMotor =
     vex::motor(vex::PORT9, vex::gearSetting::ratio18_1, false);
@@ -206,6 +209,8 @@ void buttons() {
     autonomous();
     autonomousStarted = false;
   }
+  // left arrow = blue
+  // down arrow = red
   if (Remote.ButtonLeft.pressing() && !autonomousStarted) {
     autonomousStarted = true;
     LeftAuton = false;
@@ -393,6 +398,8 @@ void autonomous6cubes(void) {
   task::sleep(2000);
   moveInches(-20);
 }
+
+// FIX Comp mode big side vs small side
 void autonomousBigSide(void) {
   double DirectionMultiplyer;
   if (LeftAuton) {
@@ -401,24 +408,50 @@ void autonomousBigSide(void) {
     DirectionMultiplyer = -1;
   }
   intake();
-  moveInches(42);
-  turnDegree(DirectionMultiplyer * -135);
-  //moveInches(-25);
-  //turnDegree(DirectionMultiplyer * -45);
-  moveInches(40);
-  turnDegree(DirectionMultiplyer * -15);
-  //moveInches(-25);
-  //turnDegree(DirectionMultiplyer * -135);
+  moveInches(15);
+  turnDegree(DirectionMultiplyer * -95);
+  // turnDegree(DirectionMultiplyer * -45);
+  moveInches(25);
+  //moveInches(-5);
+  turnDegree(DirectionMultiplyer * -55);
+  // moveInches(-25);
+  // turnDegree(DirectionMultiplyer * -135);
   setWheelVelocity(AutonWheelsSpeed);
-  task::sleep(1500);
+  task::sleep(1000);
   stopIntake();
   rampUpBigSideAuton();
   setWheelVelocity(15);
   task::sleep(3500);
   rampDownAuton();
   moveInches(-20);
-  //turnDegree(180);
+  // turnDegree(180);
 }
+// void autonomousBigSide(void) {
+//   double DirectionMultiplyer;
+//   if (LeftAuton) {
+//     DirectionMultiplyer = 1;
+//   } else {
+//     DirectionMultiplyer = -1;
+//   }
+//   intake();
+//   moveInches(42);
+//   turnDegree(DirectionMultiplyer * -135);
+//   //moveInches(-25);
+//   //turnDegree(DirectionMultiplyer * -45);
+//   moveInches(40);
+//   turnDegree(DirectionMultiplyer * -15);
+//   //moveInches(-25);
+//   //turnDegree(DirectionMultiplyer * -135);
+//   setWheelVelocity(AutonWheelsSpeed);
+//   task::sleep(1500);
+//   stopIntake();
+//   rampUpBigSideAuton();
+//   setWheelVelocity(15);
+//   task::sleep(3500);
+//   rampDownAuton();
+//   moveInches(-20);
+//   //turnDegree(180);
+// }
 
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
@@ -446,7 +479,11 @@ void usercontrol(void) {
 //
 int main() {
   // Set up callbacks for autonomous and driver control periods.
-  Competition.autonomous(autonomous);
+  if (BigSide) {
+    Competition.autonomous(autonomousBigSide);
+  } else {
+    Competition.autonomous(autonomous);
+  }
   Competition.drivercontrol(usercontrol);
 
   // Run the pre-autonomous function.
